@@ -78,7 +78,7 @@ async def display_task(interaction: discord.Interaction, section:str):
     else:
         taskMessage = f"Here are the current items due for {section}: \n"
         for task in allTasks:
-            taskMessage += f'{task[0]} from {task[2]} is due on {task[3]} [ADDED BY {task[1]}]\n'
+            taskMessage += f'[ID:{task[4]}] {task[0]} from {task[2]} is due on {task[3]} - **{task[1]}**\n'
         await interaction.response.send_message(taskMessage)
 
 TutorBOT.tree.add_command(display_task)

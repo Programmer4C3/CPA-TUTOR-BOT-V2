@@ -51,6 +51,9 @@ def add_section(server_id:int, section_name:str):
 
     CPA_db.commit()
 
+def remove_section(server_id:int, section_name:str):
+    pass
+
 def display_section(server_id:int):
     rows = CPA_db.execute("""
         SELECT sectionName
@@ -80,6 +83,9 @@ def add_task(section_name:str, server_id:int, task_name:str, addedBy:int, course
 
     return True
 
+def remove_task(task_name:str, section_name:str, server_id:int):
+    pass
+
 def display_tasks(section_name:str, server_id:int):
     section_id = CPA_db.execute("""
         SELECT sectionID
@@ -91,7 +97,7 @@ def display_tasks(section_name:str, server_id:int):
         return -1
 
     rows = CPA_db.execute("""
-        SELECT taskName, addedBy, courseName, dueDate
+        SELECT taskName, addedBy, courseName, dueDate, taskID
         FROM Tasks
         WHERE sectionID = ?
         ORDER BY dueDate
