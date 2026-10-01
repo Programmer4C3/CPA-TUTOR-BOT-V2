@@ -1,11 +1,14 @@
+# Imports for discord
 import discord
 from discord.ext import commands
 from discord import app_commands
 
+# Imports for token
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+# The database.py SQLlite
 import database
 
 intents = discord.Intents.all()
@@ -54,14 +57,29 @@ async def display_section(interaction: discord.Interaction):
 TutorBOT.tree.add_command(display_section)
 
 @app_commands.command(name='add_task', description="Add a type of coursework to the db date format (MM/DD/YY)")
-async def add_task(interaction: discord.Interaction, type:str, title:str, section:str, date:int):
-    await interaction.response.send_message(f'Sucessfully added the {type} "{title}" to section {section} that is due on the {date}')
+async def add_task(interaction: discord.Interaction, course:str, title:str, section:str, date:int):
+    sectionFound = database.add_task(section, interaction.guild_id, title, interaction.user.name, course, date)
+
+    if sectionFound is None:
+        await interaction.response.send_message(f'ERROR! The section {section} does not exist!')
+    else:
+        await interaction.response.send_message(f'Sucessfully added "{title}" from {course} to section: {section} that is due on the {date}')
 
 TutorBOT.tree.add_command(add_task)
 
 @app_commands.command(name='display_task', description="View all due tasks for a section.")
 async def display_task(interaction: discord.Interaction, section:str):
-    await interaction.response.send_message(f'Here are the current items due for {section}: ')
+    allTasks = database.display_tasks(section, interaction.guild_id)
+
+    if allTasks == -1:
+        await interaction.response.send_message(f'Are you sure {section} exists?')
+    elif allTasks == 0:
+        await interaction.response.send_message(f'Currently there are no logged tasks for {section}')
+    else:
+        taskMessage = f"Here are the current items due for {section}: \n"
+        for task in allTasks:
+            taskMessage += f'{task[0]} from {task[2]} is due on {task[3]} [ADDED BY {task[1]}]\n'
+        await interaction.response.send_message(taskMessage)
 
 TutorBOT.tree.add_command(display_task)
 

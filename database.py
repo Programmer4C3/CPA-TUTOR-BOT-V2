@@ -61,8 +61,43 @@ def display_section(server_id:int):
 
     return rows
 
-def add_task(task_id:int, section_id:int, task_name:str, addedBy:int, course_name:str, due_date:int):
-    pass
+def add_task(section_name:str, server_id:int, task_name:str, addedBy:int, course_name:str, due_date:int):
+    section_id = CPA_db.execute("""
+        SELECT sectionID
+        FROM Sections
+        WHERE Sections.sectionName = ? AND Sections.serverID = ?
+    """, (section_name, server_id)).fetchone()
 
-def display_tasks(server_id:int, section_id:int):
-    pass
+    if section_id is None:
+        return None
+
+    CPA_db.execute("""
+        INSERT OR IGNORE INTO Tasks (sectionID, taskName, addedBy, courseName, dueDate)
+        VALUES (?,?,?,?,?)
+    """, (section_id[0], task_name, addedBy, course_name, due_date))
+
+    CPA_db.commit()
+
+    return True
+
+def display_tasks(section_name:str, server_id:int):
+    section_id = CPA_db.execute("""
+        SELECT sectionID
+        FROM Sections
+        WHERE Sections.sectionName = ? AND Sections.serverID = ?
+    """, (section_name, server_id)).fetchone()
+
+    if section_id is None:
+        return -1
+
+    rows = CPA_db.execute("""
+        SELECT taskName, addedBy, courseName, dueDate
+        FROM Tasks
+        WHERE sectionID = ?
+        ORDER BY dueDate
+    """, (section_id[0],)).fetchall()
+
+    if len(rows)==0:
+        return 0
+
+    return rows
