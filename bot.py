@@ -60,8 +60,10 @@ TutorBOT.tree.add_command(display_section)
 async def add_task(interaction: discord.Interaction, course:str, title:str, section:str, date:int):
     sectionFound = database.add_task(section, interaction.guild_id, title, interaction.user.name, course, date)
 
-    if sectionFound is None:
-        await interaction.response.send_message(f'ERROR! The section {section} does not exist!')
+    if sectionFound == -1:
+        await interaction.response.send_message(f'The section {section} does not exist!')
+    elif sectionFound == 0:
+        await interaction.response.send_message(f'The section {section} has reached task limits')
     else:
         await interaction.response.send_message(f'Sucessfully added "{title}" from {course} to section: {section} that is due on the {date}')
 

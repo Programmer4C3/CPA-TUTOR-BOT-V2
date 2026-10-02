@@ -21,13 +21,14 @@ CPA_db.executescript("""
     );
 
     CREATE TABLE IF NOT EXISTS Tasks (
-        taskID INT PRIMARY KEY,
+        taskID INTEGER,
         sectionID INTEGER NOT NULL,
         taskName TEXT NOT NULL,
         addedBy INTEGER NOT NULL,
         courseName TEXT NOT NULL,
         dueDate INTEGER NOT NULL,
 
+        PRIMARY KEY (taskID, sectionID)
         FOREIGN KEY (SectionID) REFERENCES Sections(SectionID)
     );
 """)
@@ -51,7 +52,15 @@ def add_section(server_id:int, section_name:str):
 
     CPA_db.commit()
 
+def clear_tasks(server_id:int, section_name:str):
+    
+    pass
+
 def remove_section(server_id:int, section_name:str):
+    # Remove all related tasks first
+    clear_tasks(server_id, section_name)
+
+    # Remove section table
     pass
 
 def display_section(server_id:int):
@@ -65,6 +74,7 @@ def display_section(server_id:int):
     return rows
 
 def add_task(section_name:str, server_id:int, task_name:str, addedBy:int, course_name:str, due_date:int):
+    #Convert section_name to sectionID
     section_id = CPA_db.execute("""
         SELECT sectionID
         FROM Sections
@@ -72,16 +82,35 @@ def add_task(section_name:str, server_id:int, task_name:str, addedBy:int, course
     """, (section_name, server_id)).fetchone()
 
     if section_id is None:
-        return None
+        return -1
+
+    #Grab taskID
+    rows = CPA_db.execute("""
+        SELECT taskID
+        FROM Tasks
+        WHERE sectionID = ?
+    """, (section_id[0],)).fetchall()
+
+    used_ids = {row[0] for row in rows}
+
+    taskID = None
+
+    for number in range(1, 11):
+        if number not in used_ids:
+            taskID = number
+            break
+
+    if taskID is None:
+        return 0
 
     CPA_db.execute("""
-        INSERT OR IGNORE INTO Tasks (sectionID, taskName, addedBy, courseName, dueDate)
-        VALUES (?,?,?,?,?)
-    """, (section_id[0], task_name, addedBy, course_name, due_date))
+        INSERT INTO Tasks (taskID, sectionID, taskName, addedBy, courseName, dueDate)
+        VALUES (?,?,?,?,?,?)
+    """, (taskID, section_id[0], task_name, addedBy, course_name, due_date))
 
     CPA_db.commit()
 
-    return True
+    return 1
 
 def remove_task(task_name:str, section_name:str, server_id:int):
     pass
