@@ -73,13 +73,18 @@ def display_section(server_id:int):
 
     return rows
 
-def add_task(section_name:str, server_id:int, task_name:str, addedBy:int, course_name:str, due_date:int):
-    #Convert section_name to sectionID
+def get_sectionID(section_name:str, server_id:int):   
     section_id = CPA_db.execute("""
         SELECT sectionID
         FROM Sections
         WHERE Sections.sectionName = ? AND Sections.serverID = ?
     """, (section_name, server_id)).fetchone()
+
+    return section_id
+
+def add_task(section_name:str, server_id:int, task_name:str, addedBy:int, course_name:str, due_date:int):
+    #Convert section_name to sectionID
+    section_id = get_sectionID(section_name, server_id)
 
     if section_id is None:
         return -1
@@ -112,15 +117,28 @@ def add_task(section_name:str, server_id:int, task_name:str, addedBy:int, course
 
     return 1
 
-def remove_task(task_name:str, section_name:str, server_id:int):
-    pass
+def remove_task(task_id:int, section_name:str, server_id:int):
+    section_id = get_sectionID(section_name, server_id)
+
+    if section_id is None:
+        return -1
+
+    rows = CPA_db.execute("""
+        DELETE FROM TASKS
+        WHERE sectionID = ? AND taskID = ?
+    """, (section_id[0], task_id))
+
+    CPA_db.commit()
+
+    print(rows.rowcount)
+    if rows.rowcount == 0:
+        return 0
+
+    return 1
+    
 
 def display_tasks(section_name:str, server_id:int):
-    section_id = CPA_db.execute("""
-        SELECT sectionID
-        FROM Sections
-        WHERE Sections.sectionName = ? AND Sections.serverID = ?
-    """, (section_name, server_id)).fetchone()
+    section_id = get_sectionID(section_name, server_id)
 
     if section_id is None:
         return -1

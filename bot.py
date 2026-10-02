@@ -86,11 +86,19 @@ async def display_task(interaction: discord.Interaction, section:str):
 TutorBOT.tree.add_command(display_task)
 
 @app_commands.command(name='remove_task', description="remove a due task for a section via taskID.")
-async def remove_task(interaction: discord.Interaction, section:str, taskid:int):
-    await interaction.response.send_message(f'Item has been removed')
+async def remove_task(interaction: discord.Interaction, section:str, task_id:int):
+    taskFound = database.remove_task(task_id,section,interaction.guild_id)
+
+    if taskFound == -1:
+        await interaction.response.send_message(f'Section: {section} does not exist!')
+    elif taskFound == 1:
+        await interaction.response.send_message(f'Item has been removed')
+    else:
+        await interaction.response.send_message(f'TaskID: {task_id} is not valid!')
 
 TutorBOT.tree.add_command(remove_task)
 
+#Bot token loading and running
 load_dotenv(Path(__file__).with_name(".env"))
 token = os.getenv("DISCORD_BOT_TOKEN")
 
