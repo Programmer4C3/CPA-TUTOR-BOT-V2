@@ -11,6 +11,10 @@ from dotenv import load_dotenv
 # The database.py SQLlite
 import database
 
+# For the cool data config
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 intents = discord.Intents.all()
 
 TutorBOT = commands.Bot(command_prefix='$', intents=intents)
@@ -56,16 +60,25 @@ async def display_section(interaction: discord.Interaction):
 
 TutorBOT.tree.add_command(display_section)
 
-@app_commands.command(name='add_task', description="Add a type of coursework to the db date format (MM/DD/YY)")
-async def add_task(interaction: discord.Interaction, course:str, title:str, section:str, date:int):
-    sectionFound = database.add_task(section, interaction.guild_id, title, interaction.user.name, course, date)
+@app_commands.command(name='add_task', description="Add a task to a particular section with a due date (MM/DD/YYYY) XX:XX PM/AM")
+async def add_task(interaction: discord.Interaction, course:str, title:str, section:str, date:str, time:str):
+    #Attempting to convert the date into a int
+    try:
+        cleanTime = time.replace(" ", "").upper()
 
-    if sectionFound == -1:
-        await interaction.response.send_message(f'The section {section} does not exist!')
-    elif sectionFound == 0:
-        await interaction.response.send_message(f'The section {section} has reached task limits')
-    else:
-        await interaction.response.send_message(f'Sucessfully added "{title}" from {course} to section: {section} that is due on the {date}')
+        due = datetime.strptime(
+            f"{date} {cleanTime}",
+            "%m/%d/%Y %I:%M%p"
+        )
+
+        due = due.replace(tzinfo=ZoneInfo("America/Toronto"))
+        due_timestamp = int(due.timestamp())     
+
+        result = database.add_task(section, interaction.guild_id, title, interaction.user.name, course, due_timestamp)
+
+        await interaction.response.send_message(result)   
+    except ValueError:
+        await interaction.response.send_message("Use a format similiar to: 10/22/2026 and a time like 8:30 PM ")
 
 TutorBOT.tree.add_command(add_task)
 
@@ -78,45 +91,35 @@ async def display_task(interaction: discord.Interaction, section:str):
     elif allTasks == 0:
         await interaction.response.send_message(f'Currently there are no logged tasks for {section}')
     else:
-        taskMessage = f"Here are the current items due for {section}: \n"
+        taskMessage = f"Section {section} - Task List \n"
         for task in allTasks:
-            taskMessage += f'[ID:{task[4]}] {task[0]} from {task[2]} is due on {task[3]} - **{task[1]}**\n'
+            taskMessage += f'\n#{task[4]} - {task[0]} - {task[2]}\n'
+            taskMessage += f'Due: <t:{task[3]}:R> - Added by @{task[1]}\n'
         await interaction.response.send_message(taskMessage)
 
 TutorBOT.tree.add_command(display_task)
 
 @app_commands.command(name='remove_task', description="remove a due task for a section via taskID.")
 async def remove_task(interaction: discord.Interaction, section:str, task_id:int):
-    taskFound = database.remove_task(task_id,section,interaction.guild_id)
+    result = database.remove_task(task_id,section,interaction.guild_id)
 
-    if taskFound == -1:
-        await interaction.response.send_message(f'Section: {section} does not exist!')
-    elif taskFound == 1:
-        await interaction.response.send_message(f'Item has been removed')
-    else:
-        await interaction.response.send_message(f'TaskID: {task_id} is not valid!')
+    await interaction.response.send_message(result)
 
 TutorBOT.tree.add_command(remove_task)
 
 @app_commands.command(name='clear_tasks', description="remove all tasks for a section")
 async def clear_tasks(interaction: discord.Interaction, section:str):
-    sectionFound = database.clear_tasks(section, interaction.guild_id)
+    result = database.clear_tasks(section, interaction.guild_id)
 
-    if sectionFound == 0:
-        await interaction.response.send_message(f'Section: {section} does not exist!')
-    elif sectionFound == 1:
-        await interaction.response.send_message(f'Section: {section} is cleared!')
+    await interaction.response.send_message(result)
 
 TutorBOT.tree.add_command(clear_tasks)
 
 @app_commands.command(name='remove_section', description="remove a section via sectionName")
 async def remove_section(interaction: discord.Interaction, section:str):
-    sectionFound = database.remove_section(section, interaction.guild_id)
+    result = database.remove_section(section, interaction.guild_id)
 
-    if sectionFound == 0:
-        await interaction.response.send_message(f'Section: {section} does not exist!')
-    elif sectionFound == 1:
-        await interaction.response.send_message(f'Section: {section} has been removed!')
+    await interaction.response.send_message(result)
 
 TutorBOT.tree.add_command(remove_section)
 

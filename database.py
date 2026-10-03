@@ -75,7 +75,7 @@ def clear_tasks(section_name:str, server_id):
     section_id = get_sectionID(section_name, server_id)
 
     if section_id is None:
-        return -1
+        return f'The section {section_name} does not exist!'
 
     CPA_db.execute("""
         DELETE FROM Tasks
@@ -84,13 +84,13 @@ def clear_tasks(section_name:str, server_id):
 
     CPA_db.commit()
 
-    return 1
+    return f'Section: {section_name} is cleared!'
 
 def remove_section(section_name:str, server_id:int):
     section_id = get_sectionID(section_name, server_id)
 
     if section_id is None:
-        return -1
+        return f'The section {section_name} does not exist!'
 
     # Remove all related tasks first
     clear_tasks(server_id, section_name)
@@ -103,14 +103,14 @@ def remove_section(section_name:str, server_id:int):
 
     CPA_db.commit()
 
-    return 1
+    return f'Section: {section_name} has been removed!'
 
 def add_task(section_name:str, server_id:int, task_name:str, addedBy:int, course_name:str, due_date:int):
     #Convert section_name to sectionID
     section_id = get_sectionID(section_name, server_id)
 
     if section_id is None:
-        return -1
+        return f'The section {section_name} does not exist!'
 
     #Grab taskID
     rows = CPA_db.execute("""
@@ -129,7 +129,7 @@ def add_task(section_name:str, server_id:int, task_name:str, addedBy:int, course
             break
 
     if taskID is None:
-        return 0
+        return f'The section: {section_name} has reached task limits'
 
     CPA_db.execute("""
         INSERT INTO Tasks (taskID, sectionID, taskName, addedBy, courseName, dueDate)
@@ -138,13 +138,13 @@ def add_task(section_name:str, server_id:int, task_name:str, addedBy:int, course
 
     CPA_db.commit()
 
-    return 1
+    return f'Sucessfully added "{task_name}" to section: {section_name}'
 
 def remove_task(task_id:int, section_name:str, server_id:int):
     section_id = get_sectionID(section_name, server_id)
 
     if section_id is None:
-        return -1
+        return f'The section {section_name} does not exist!'
 
     rows = CPA_db.execute("""
         DELETE FROM TASKS
@@ -155,9 +155,9 @@ def remove_task(task_id:int, section_name:str, server_id:int):
 
     print(rows.rowcount)
     if rows.rowcount == 0:
-        return 0
+        return f'TaskID: {task_id} is not valid!'
 
-    return 1
+    return f'Item has been removed'
     
 
 def display_tasks(section_name:str, server_id:int):
