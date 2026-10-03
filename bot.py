@@ -37,6 +37,40 @@ async def on_ready():
 async def on_guild_join(guild: discord.Guild):
     database.add_server(guild.id, guild.name, guild.member_count)
 
+@app_commands.command(name='set_bypass', description="Set a role to bypass commands")
+async def set_bypass(interaction: discord.Interaction, role_id:discord.Role):
+    database.set_bypass(interaction.guild_id, role_id.id)
+
+TutorBOT.tree.add_command(set_bypass)
+
+@app_commands.command(name='get_settings', description="See all settings for the server")
+async def get_settings(interaction: discord.Interaction):
+    allSettings = database.get_settings(interaction.guild_id)
+
+    embed = discord.Embed(
+        title=f"⚙️ {interaction.guild}\'s Settings ⚙️",
+        colour = discord.Colour.purple()
+    )
+
+    message = ""
+
+    for setting, status in allSettings.items():
+        if setting.startswith("restricted"):
+            status = "Enabled" if status else "Disabled"
+        elif status is None:
+            status = "Not set"
+
+        message += f"**{setting}** : {status}\n"
+
+        if setting in ("memberCount", "restrictedAddSection", "updateChannel"):
+            message += "\n"
+
+    embed.description = message
+
+    await interaction.response.send_message(embed=embed)
+
+TutorBOT.tree.add_command(get_settings)
+
 @app_commands.command(name='add_section', description="Add a new section with a realtionship to this server.")
 async def add_section(interaction: discord.Interaction, section_name:str):
     database.add_section(interaction.guild_id, section_name)
@@ -54,9 +88,14 @@ async def display_section(interaction: discord.Interaction):
         return
 
     names = [row[0] for row in rows]
-    await interaction.response.send_message(
-        "Current are sections: " + ", ".join(names)
+
+    embed = discord.Embed(
+        title=f"🌧️ {interaction.guild}\'s Sections 🌧️",
+        description="\n".join(names),
+        colour = discord.Colour.yellow()
     )
+
+    await interaction.response.send_message(embed=embed)
 
 TutorBOT.tree.add_command(display_section)
 
@@ -88,14 +127,30 @@ async def display_task(interaction: discord.Interaction, section:str):
 
     if allTasks == -1:
         await interaction.response.send_message(f'Are you sure {section} exists?')
-    elif allTasks == 0:
-        await interaction.response.send_message(f'Currently there are no logged tasks for {section}')
     else:
-        taskMessage = f"Section {section} - Task List \n"
-        for task in allTasks:
-            taskMessage += f'\n#{task[4]} - {task[0]} - {task[2]}\n'
-            taskMessage += f'Due: <t:{task[3]}:R> - Added by @{task[1]}\n'
-        await interaction.response.send_message(taskMessage)
+        embed = discord.Embed(
+            title=f"📚 Section {section}\'s Tasks 📚",
+            colour = discord.Colour.blue()
+        )
+
+        if allTasks == 0:
+            embed.description = "None"
+            embed.set_footer(text=f"0 task(s)")
+            await interaction.response.send_message(embed=embed)
+
+        for taskID, taskName, courseName, addedBy, dueDate in allTasks:
+            embed.add_field(
+                name=f"#{taskID} · {taskName} | {courseName}",
+                value=(
+                    f"Due <t:{dueDate}:R>\n"
+                    f"Added by <@{addedBy}>"
+                ),
+                inline=False,
+            )
+
+        embed.set_footer(text=f"{len(allTasks)} task(s)")
+
+        await interaction.response.send_message(embed=embed)
 
 TutorBOT.tree.add_command(display_task)
 

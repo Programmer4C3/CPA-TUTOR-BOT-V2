@@ -8,7 +8,27 @@ CPA_db.executescript("""
     CREATE TABLE IF NOT EXISTS Servers (
         serverID INTEGER PRIMARY KEY,
         serverName TEXT NOT NULL,
-        memberCount INTEGER
+        memberCount INTEGER,
+
+        restrictedDeleteSection INTEGER NOT NULL DEFAULT 1
+            CHECK (restrictedDeleteSection IN (0, 1)),
+
+        restrictedDeleteTask INTEGER NOT NULL DEFAULT 0
+            CHECK (restrictedDeleteTask IN (0, 1)),
+
+        restrictedAddTask INTEGER NOT NULL DEFAULT 0
+            CHECK (restrictedAddTask IN (0, 1)),
+
+        restrictedAddSection INTEGER NOT NULL DEFAULT 1
+            CHECK (restrictedAddSection IN (0, 1)),
+
+        morningChannel INTEGER,
+        questionChannel INTEGER,
+        updateChannel INTEGER,
+        restrictionBypass INTEGER,
+
+        lastQuestionDate TEXT,
+        lastMorningDate TEXT
     );
 
     CREATE TABLE IF NOT EXISTS Sections (
@@ -167,7 +187,7 @@ def display_tasks(section_name:str, server_id:int):
         return -1
 
     rows = CPA_db.execute("""
-        SELECT taskName, addedBy, courseName, dueDate, taskID
+        SELECT taskID, taskName, courseName, addedBy, dueDate
         FROM Tasks
         WHERE sectionID = ?
         ORDER BY dueDate
@@ -177,3 +197,22 @@ def display_tasks(section_name:str, server_id:int):
         return 0
 
     return rows
+
+def set_bypass(server_id:int, role_id:int):
+    CPA_db.execute("""
+        UPDATE Servers
+        SET restrictionBypass = ?
+        WHERE serverID = ?
+    """, (role_id, server_id))
+
+    CPA_db.commit()
+
+def get_settings(server_id:int):
+    allSettings = CPA_db.execute("""
+        SELECT * FROM Servers
+        WHERE serverID = ?
+    """, (server_id,))
+
+    columnNames = [column[0] for column in allSettings.description]
+
+    return dict(zip(columnNames,allSettings.fetchone()))
