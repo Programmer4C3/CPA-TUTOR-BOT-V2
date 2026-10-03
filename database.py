@@ -52,17 +52,6 @@ def add_section(server_id:int, section_name:str):
 
     CPA_db.commit()
 
-def clear_tasks(server_id:int, section_name:str):
-    
-    pass
-
-def remove_section(server_id:int, section_name:str):
-    # Remove all related tasks first
-    clear_tasks(server_id, section_name)
-
-    # Remove section table
-    pass
-
 def display_section(server_id:int):
     rows = CPA_db.execute("""
         SELECT sectionName
@@ -82,6 +71,40 @@ def get_sectionID(section_name:str, server_id:int):
 
     return section_id
 
+def clear_tasks(section_name:str, server_id):
+    section_id = get_sectionID(section_name, server_id)
+
+    if section_id is None:
+        return -1
+
+    CPA_db.execute("""
+        DELETE FROM Tasks
+        WHERE sectionID = ?
+    """, (section_id[0],))
+
+    CPA_db.commit()
+
+    return 1
+
+def remove_section(section_name:str, server_id:int):
+    section_id = get_sectionID(section_name, server_id)
+
+    if section_id is None:
+        return -1
+
+    # Remove all related tasks first
+    clear_tasks(server_id, section_name)
+
+    # Remove section table
+    CPA_db.execute("""
+        DELETE FROM Sections
+        WHERE sectionID = ? AND serverID = ?
+    """, (section_id[0],server_id))
+
+    CPA_db.commit()
+
+    return 1
+
 def add_task(section_name:str, server_id:int, task_name:str, addedBy:int, course_name:str, due_date:int):
     #Convert section_name to sectionID
     section_id = get_sectionID(section_name, server_id)
@@ -100,7 +123,7 @@ def add_task(section_name:str, server_id:int, task_name:str, addedBy:int, course
 
     taskID = None
 
-    for number in range(1, 11):
+    for number in range(1, 21):
         if number not in used_ids:
             taskID = number
             break

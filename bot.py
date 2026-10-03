@@ -98,6 +98,28 @@ async def remove_task(interaction: discord.Interaction, section:str, task_id:int
 
 TutorBOT.tree.add_command(remove_task)
 
+@app_commands.command(name='clear_tasks', description="remove all tasks for a section")
+async def clear_tasks(interaction: discord.Interaction, section:str):
+    sectionFound = database.clear_tasks(section, interaction.guild_id)
+
+    if sectionFound == 0:
+        await interaction.response.send_message(f'Section: {section} does not exist!')
+    elif sectionFound == 1:
+        await interaction.response.send_message(f'Section: {section} is cleared!')
+
+TutorBOT.tree.add_command(clear_tasks)
+
+@app_commands.command(name='remove_section', description="remove a section via sectionName")
+async def remove_section(interaction: discord.Interaction, section:str):
+    sectionFound = database.remove_section(section, interaction.guild_id)
+
+    if sectionFound == 0:
+        await interaction.response.send_message(f'Section: {section} does not exist!')
+    elif sectionFound == 1:
+        await interaction.response.send_message(f'Section: {section} has been removed!')
+
+TutorBOT.tree.add_command(remove_section)
+
 #Bot token loading and running
 load_dotenv(Path(__file__).with_name(".env"))
 token = os.getenv("DISCORD_BOT_TOKEN")
