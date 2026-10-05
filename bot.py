@@ -1,6 +1,6 @@
 # Imports for discord
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord import app_commands
 
 # Imports for token
@@ -31,6 +31,9 @@ async def on_ready():
         print(f'Error syncing commands: {e}')
 
     print(f'Logged in as {TutorBOT.user.name}')
+
+    if not scheduled_checks.is_running():
+        scheduled_checks.start()
 
 # Handles a new server the bot joins while online
 @TutorBOT.event
@@ -209,6 +212,51 @@ async def set_channel(interaction: discord.Interaction, channel_type:str, locati
     await interaction.response.send_message(result)
 
 TutorBOT.tree.add_command(set_channel)
+
+# Loop functions
+@tasks.loop(seconds=31)
+async def scheduled_checks():
+    ## Task deletion message!
+    allExpired = database.remove_expired_tasks()
+    
+    for taskName, sectionName, serverId in allExpired:
+        serverSettings = database.get_settings(serverId)
+
+        if serverSettings is None or serverSettings["updateChannel"] is None:
+            continue
+
+        channel = TutorBOT.get_channel(serverSettings["updateChannel"])
+
+        if channel is None:
+            continue
+
+        try:
+            await channel.send(
+                f'⏰ **{taskName}** in Section: **{sectionName}** is now past it\'s due date and has been removed!'
+            )
+        except discord.HTTPException as error:
+            print(f"Could not send task update for {serverId}: {error}")
+
+    #Morning update code
+    now = datetime.now(ZoneInfo("America/Toronto"))
+    if now.hour == 17 and now.minute == 57:
+        for guild in TutorBOT.guilds:
+            serverSettings = database.get_settings(guild.id)
+
+            if serverSettings is None or serverSettings["morningChannel"] is None:
+                continue
+
+            channel = guild.get_channel(serverSettings["morningChannel"])
+
+            if channel is None:
+                continue
+
+            try:
+                await channel.send("☀️ Good morning, CPA!")
+            except discord.HTTPException as error:
+                print(f"Could not send greeting in {guild.name}: {error}")
+
+        
 
 #Bot token loading and running
 load_dotenv(Path(__file__).with_name(".env"))

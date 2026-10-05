@@ -1,4 +1,5 @@
 import sqlite3
+import time
 
 #datbase conenction for the bot
 CPA_db = sqlite3.connect("cpa_tutor.db")
@@ -25,10 +26,7 @@ CPA_db.executescript("""
         morningChannel INTEGER,
         questionChannel INTEGER,
         updateChannel INTEGER,
-        restrictionBypass INTEGER,
-
-        lastQuestionDate TEXT,
-        lastMorningDate TEXT
+        restrictionBypass INTEGER
     );
 
     CREATE TABLE IF NOT EXISTS Sections (
@@ -255,3 +253,21 @@ def set_channel(server_id:int, channelType:str, location:int):
     CPA_db.commit()
 
     return f'{channelType} has been relocated!'
+
+def remove_expired_tasks():
+    now = int(time.time())
+
+    expiredTasks = CPA_db.execute("""
+        SELECT Tasks.taskName, Sections.sectionName, Sections.serverID FROM Tasks
+        INNER JOIN Sections on Tasks.sectionID = Sections.sectionID
+        WHERE Tasks.dueDate <= ?
+    """, (now,)).fetchall()
+
+    CPA_db.execute("""
+            DELETE FROM Tasks
+            WHERE dueDate <= ?
+        """, (now,))
+
+    CPA_db.commit()
+
+    return expiredTasks
