@@ -71,6 +71,14 @@ async def get_settings(interaction: discord.Interaction):
 
 TutorBOT.tree.add_command(get_settings)
 
+def canUserBypass(server_id:int, userRoles:tuple):
+    byPassRole = database.checkBypass(server_id)
+    if byPassRole is not None:
+        for role in userRoles:
+            if role.id == byPassRole:
+                return True
+        return False
+
 @app_commands.command(name='add_section', description="Add a new section with a realtionship to this server.")
 async def add_section(interaction: discord.Interaction, section_name:str):
     database.add_section(interaction.guild_id, section_name)
@@ -177,6 +185,30 @@ async def remove_section(interaction: discord.Interaction, section:str):
     await interaction.response.send_message(result)
 
 TutorBOT.tree.add_command(remove_section)
+
+@app_commands.command(name='set_restriction', description="set a restriction config to a certain status")
+async def set_restriction(interaction: discord.Interaction, restriction_type:str, status:bool):
+    if not canUserBypass(interaction.guild_id, interaction.user.roles):
+        await interaction.response.send_message(f"Only <@&{database.checkBypass(interaction.guild_id)}> can use this command")
+        return
+
+    result = database.set_restriction(interaction.guild_id, restriction_type, status)
+
+    await interaction.response.send_message(result)
+
+TutorBOT.tree.add_command(set_restriction)
+
+@app_commands.command(name='set_channel', description="set a certain channel for the bot's specific message")
+async def set_channel(interaction: discord.Interaction, channel_type:str, location:discord.TextChannel):
+    if not canUserBypass(interaction.guild_id, interaction.user.roles):
+        await interaction.response.send_message(f"Only <@&{database.checkBypass(interaction.guild_id)}> can use this command")
+        return
+    
+    result = database.set_channel(interaction.guild_id, channel_type, location.id)
+
+    await interaction.response.send_message(result)
+
+TutorBOT.tree.add_command(set_channel)
 
 #Bot token loading and running
 load_dotenv(Path(__file__).with_name(".env"))

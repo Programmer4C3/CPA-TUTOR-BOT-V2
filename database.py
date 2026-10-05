@@ -216,3 +216,42 @@ def get_settings(server_id:int):
     columnNames = [column[0] for column in allSettings.description]
 
     return dict(zip(columnNames,allSettings.fetchone()))
+
+def checkBypass(server_id:int):
+    return CPA_db.execute("""
+        SELECT restrictionBypass 
+        FROM Servers
+        WHERE serverID = ?
+    """, (server_id,)).fetchone()[0]
+
+def set_restriction(server_id:int, restrictionType:str, status:bool):
+    allRestrictions = {"restrictedDeleteSection", "restrictedDeleteTask", "restrictedAddSection", "restrictedAddTask"}
+
+    if restrictionType not in allRestrictions:
+        return "restrictionType is not correct (Case Sensitive)"
+    
+    CPA_db.execute(f"""
+        UPDATE Servers
+        SET {restrictionType} = ?
+        WHERE serverID = ?
+    """, (int(status), server_id))
+
+    CPA_db.commit()
+
+    return f'{restrictionType} has been set to {status}'
+
+def set_channel(server_id:int, channelType:str, location:int):
+    allChannelType = {"morningChannel", "questionChannel", "updateChannel"}
+
+    if channelType not in allChannelType:
+            return "channelType is not correct (Case Sensitive)"
+
+    CPA_db.execute(f"""
+        UPDATE Servers
+        SET {channelType} = ?
+        WHERE serverID = ?
+    """, (location, server_id))
+
+    CPA_db.commit()
+
+    return f'{channelType} has been relocated!'
