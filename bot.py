@@ -148,18 +148,18 @@ async def display_task(interaction: discord.Interaction, section:str):
             embed.description = "None"
             embed.set_footer(text=f"0 task(s)")
             await interaction.response.send_message(embed=embed)
+        else:
+            for taskID, taskName, courseName, addedBy, dueDate in allTasks:
+                embed.add_field(
+                    name=f"#{taskID} · {taskName} | {courseName}",
+                    value=(
+                        f"Due <t:{dueDate}:R>\n"
+                        f"Added by <@{addedBy}>"
+                    ),
+                    inline=False,
+                )
 
-        for taskID, taskName, courseName, addedBy, dueDate in allTasks:
-            embed.add_field(
-                name=f"#{taskID} · {taskName} | {courseName}",
-                value=(
-                    f"Due <t:{dueDate}:R>\n"
-                    f"Added by <@{addedBy}>"
-                ),
-                inline=False,
-            )
-
-        embed.set_footer(text=f"{len(allTasks)} task(s)")
+            embed.set_footer(text=f"{len(allTasks)} task(s)")
 
         await interaction.response.send_message(embed=embed)
 
