@@ -22,6 +22,12 @@ intents = discord.Intents.all()
 
 TutorBOT = commands.Bot(command_prefix='$', intents=intents)
 
+TutorBOT.tree.allowed_contexts = app_commands.AppCommandContext(
+    guild=True,
+    dm_channel=False,
+    private_channel=False
+)
+
 @TutorBOT.event
 async def on_ready():
     for guild in TutorBOT.guilds:
