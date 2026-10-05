@@ -11,6 +11,9 @@ from dotenv import load_dotenv
 # The database.py SQLlite
 import database
 
+# The questions.json file
+import questions
+
 # For the cool data config
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -239,7 +242,7 @@ async def scheduled_checks():
 
     #Morning update code
     now = datetime.now(ZoneInfo("America/Toronto"))
-    if now.hour == 17 and now.minute == 57:
+    if now.hour == 8 and now.minute == 00:
         for guild in TutorBOT.guilds:
             serverSettings = database.get_settings(guild.id)
 
@@ -255,7 +258,27 @@ async def scheduled_checks():
                 await channel.send("☀️ Good morning, CPA!")
             except discord.HTTPException as error:
                 print(f"Could not send greeting in {guild.name}: {error}")
+    elif now.hour == 13 and now.minute == 00:
+        question = questions.get_question()
 
+        for guild in TutorBOT.guilds:
+            serverSettings = database.get_settings(guild.id)
+
+            if serverSettings is None or serverSettings["questionChannel"] is None:
+                continue
+
+            channel = guild.get_channel(serverSettings["morningChannel"])
+
+            if channel is None:
+                continue
+
+            try:
+                message = "🧠 **Programming Question of the Day** 🧠\n"
+                message += f"{question['question']}"
+                await channel.send(message)
+                questions.remove_question(question["id"])
+            except discord.HTTPException as error:
+                print(f"Could not send greeting in {guild.name}: {error}")
         
 
 #Bot token loading and running
