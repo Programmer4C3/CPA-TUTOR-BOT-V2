@@ -28,6 +28,8 @@ TutorBOT.tree.allowed_contexts = app_commands.AppCommandContext(
     private_channel=False
 )
 
+@app_commands.allowed_installs(guilds=True, users=True)
+
 @TutorBOT.event
 async def on_ready():
     for guild in TutorBOT.guilds:
@@ -43,6 +45,9 @@ async def on_ready():
 
     if not scheduled_checks.is_running():
         scheduled_checks.start()
+
+    for guild in TutorBOT.guilds:
+        print(f"Connected to: {guild.name} ({guild.id})")
 
 # Handles a new server the bot joins while online
 @TutorBOT.event
@@ -157,6 +162,7 @@ async def display_task(interaction: discord.Interaction, section:str):
             embed.description = "None"
             embed.set_footer(text=f"0 task(s)")
             await interaction.response.send_message(embed=embed)
+            return
         else:
             for taskID, taskName, courseName, addedBy, dueDate in allTasks:
                 embed.add_field(
@@ -223,7 +229,7 @@ async def set_channel(interaction: discord.Interaction, channel_type:str, locati
 TutorBOT.tree.add_command(set_channel)
 
 # Loop functions
-@tasks.loop(seconds=31)
+@tasks.loop(minutes=1)
 async def scheduled_checks():
     ## Task deletion message!
     allExpired = database.remove_expired_tasks()
