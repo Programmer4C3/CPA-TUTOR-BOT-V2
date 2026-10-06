@@ -270,7 +270,7 @@ async def scheduled_checks():
                 await channel.send("☀️ Good morning, CPA!")
             except discord.HTTPException as error:
                 print(f"Could not send greeting in {guild.name}: {error}")
-    elif now.hour == 13 and now.minute == 00:
+    elif now.hour == 9 and now.minute == 00:
         question = questions.get_question()
 
         for guild in TutorBOT.guilds:
