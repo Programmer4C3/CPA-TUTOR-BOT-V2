@@ -88,13 +88,14 @@ async def get_settings(interaction: discord.Interaction):
 
 TutorBOT.tree.add_command(get_settings)
 
-def canUserBypass(server_id:int, userRoles:tuple):
-    byPassRole = database.checkBypass(server_id)
-    if byPassRole is not None:
-        for role in userRoles:
-            if role.id == byPassRole:
-                return True
-        return False
+BOT_OWNER_ID = 855083159249747988
+
+def canUserBypass(server_id: int, member) -> bool:
+    if member.id == BOT_OWNER_ID:
+        return True
+
+    bypass_role_id = database.checkBypass(server_id)
+    return any(role.id == bypass_role_id for role in member.roles)
 
 @app_commands.command(name='add_section', description="Add a new section with a realtionship to this server.")
 async def add_section(interaction: discord.Interaction, section_name:str):
@@ -206,7 +207,7 @@ TutorBOT.tree.add_command(remove_section)
 
 @app_commands.command(name='set_restriction', description="set a restriction config to a certain status")
 async def set_restriction(interaction: discord.Interaction, restriction_type:str, status:bool):
-    if not canUserBypass(interaction.guild_id, interaction.user.roles):
+    if not canUserBypass(interaction.guild_id, interaction.user):
         await interaction.response.send_message(f"Only <@&{database.checkBypass(interaction.guild_id)}> can use this command")
         return
 
@@ -218,7 +219,7 @@ TutorBOT.tree.add_command(set_restriction)
 
 @app_commands.command(name='set_channel', description="set a certain channel for the bot's specific message")
 async def set_channel(interaction: discord.Interaction, channel_type:str, location:discord.TextChannel):
-    if not canUserBypass(interaction.guild_id, interaction.user.roles):
+    if not canUserBypass(interaction.guild_id, interaction.user):
         await interaction.response.send_message(f"Only <@&{database.checkBypass(interaction.guild_id)}> can use this command")
         return
     
