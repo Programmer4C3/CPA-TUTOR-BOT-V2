@@ -220,15 +220,19 @@ async def set_restriction(interaction: discord.Interaction, restriction_type:str
 
 TutorBOT.tree.add_command(set_restriction)
 
-@app_commands.command(name='set_channel', description="set a certain channel for the bot's specific message")
-async def set_channel(interaction: discord.Interaction, channel_type:str, location:discord.TextChannel):
+@app_commands.command(name="set_channel", description="Set a channel or leave it blank to disable messages")
+async def set_channel(
+    interaction: discord.Interaction,
+    channel_type: str,
+    location: discord.TextChannel | None = None,
+):
     if not canUserBypass(interaction.guild_id, interaction.user):
-        await interaction.response.send_message(f"Only <@&{database.checkBypass(interaction.guild_id)}> can use this command")
+        await interaction.response.send_message("You can't change this setting.", ephemeral=True)
         return
-    
-    result = database.set_channel(interaction.guild_id, channel_type, location.id)
 
-    await interaction.response.send_message(result)
+    channel_id = location.id if location is not None else None
+    result = database.set_channel(interaction.guild_id, channel_type, channel_id)
+    await interaction.response.send_message(result, ephemeral=True)
 
 TutorBOT.tree.add_command(set_channel)
 
