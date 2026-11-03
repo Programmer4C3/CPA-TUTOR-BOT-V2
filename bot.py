@@ -57,6 +57,9 @@ async def on_guild_join(guild: discord.Guild):
 @app_commands.command(name='set_bypass', description="Set a role to bypass commands")
 async def set_bypass(interaction: discord.Interaction, role_id:discord.Role):
     database.set_bypass(interaction.guild_id, role_id.id)
+    await interaction.response.send_message(
+        f"Bypass role set to {role_id.mention}.", ephemeral=True
+    )
 
 TutorBOT.tree.add_command(set_bypass)
 
